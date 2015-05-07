@@ -15,7 +15,14 @@ The Tile is effectively a bosh release comprisinging of the custom auto scale ap
 * Create a release file using createRelease.sh script.
 * Create a new image (if necessary) for the tile by first creating an image and converting it to [Base-64 encoding](http://www.base64-image.de/step-2.php) and use that in the image tag inside the tile file. Ensure the sizes are 128x128 pixel size for it to fit inside the tile image on the Ops Mgr.
 * The Tile is configured to be used for AWS and as such references AWS stemcells and versions within it. Edit the *tile.yml file if planning to generate a tile for VSphere or other platforms.
-* Run createTile.sh to generate the Ops Mgr Tile (.pivotal file).
+* Edit the stemcell references based on running on vSphere or AWS inside the tile file.
+```
+  name: bosh-vsphere-esxi-ubuntu-trusty-go_agent                           # UNCOMMENT for vSphere
+  file: bosh-stemcell-2865.1-vsphere-esxi-ubuntu-trusty-go_agent.tgz       # UNCOMMENT for vSphere
+  #name: light-bosh-aws-xen-hvm-ubuntu-trusty-go_agent                     # UNCOMMENT for AWS
+  #file: light-bosh-stemcell-2865.1-aws-xen-hvm-ubuntu-trusty-go_agent.tgz # UNCOMMENT for AWS
+```
+* Run createTile.sh to generate the Custom Autoscaler Pivotal Tile (.pivotal file).
 
 ## Tile Import into Ops Mgr
 `Important: Backup the Ops Mgr configuration before proceeding to next step.`
