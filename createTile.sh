@@ -1,6 +1,6 @@
 #!/bin/sh
 
-TILE_NAME=CustomAutoscaler-Experimental
+TILE_NAME=CustomAutoscaler-ExperimentalTile
 TILE_FILE=`pwd`/*tile.yml
 RELEASE_TARFILE=`pwd`/releases/*/*.tgz
 #BOSH_STEMCELL_FILE=`cat ${TILE_FILE} | grep "bosh-stemcell" | grep "^ *file:" | awk '{print $2}' `

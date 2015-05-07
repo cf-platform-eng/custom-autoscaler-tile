@@ -13,7 +13,7 @@ The Tile is effectively a bosh release comprisinging of the custom auto scale ap
 * Run fetch_autoscaler.sh script to fetch autoscaler app bundle from github or other repo and add it as a blob to the release. Edit the path to download the code if necessary.
   Note: Github master repo always creates an additional container around the app code as "${RepoName}-master". So, during app push, make sure the actual app code path is pushed and not just the master.zip. The deploy errand unzips the master zip file and then pushes the actual app content to cf. Based on a different repo or package structure, this might require some changes inside the jobs/deploy-autoscaler/templates/deploy.sh.erb.
 * Create a release file using createRelease.sh script.
-* Create a new image (only if necessary) for the tile by first creating an image and converting it to [Base-64 encoding](http://www.base64-image.de/step-2.php) and use that in the image tag inside the tile file. Ensure the sizes are 128x128 pixel size for it to fit inside the tile image on the Ops Mgr.
+* Create a new image (if necessary) for the tile by first creating an image and converting it to [Base-64 encoding](http://www.base64-image.de/step-2.php) and use that in the image tag inside the tile file. Ensure the sizes are 128x128 pixel size for it to fit inside the tile image on the Ops Mgr.
 * The Tile is configured to be used for AWS and as such references AWS stemcells and versions within it. Edit the *tile.yml file if planning to generate a tile for VSphere or other platforms.
 * Run createTile.sh to generate the Ops Mgr Tile (.pivotal file).
 
