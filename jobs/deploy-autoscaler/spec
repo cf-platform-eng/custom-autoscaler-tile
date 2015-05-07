@@ -1,0 +1,55 @@
+---
+name: deploy-autoscaler
+templates:
+  deploy.sh.erb: bin/run
+packages:
+- cf_cli
+- autoscaler
+properties:
+  ssl.skip_cert_verify:
+    description: 'Whether to verify SSL certs when making web requests'
+  domain:
+    description: 'CloudFoundry system domain'
+  app_domains:
+    description: 'CloudFoundry application domains'
+  uaa.clients.autoscaler.secret:
+    description: 'Autoscaling service UAA Client Secret'
+  autoscaler.app_name:
+    description: 'Name of the Autoscaler Application'
+  autoscaler.app_uri:
+    description: 'Uri of the Autoscaler Application'
+  autoscaler.create_open_security_group:
+    description: 'Open security group for the app to access outside'
+    default: false
+  autoscaler.app_push.org_quota:
+    description: 'Org Memory Quota for the Autoscaler Application'
+    default: 1024
+  autoscaler.app_push.timeout:
+    description: 'App Push timeout for the Autoscaler Application'
+    default: 180
+  autoscaler.app_push.memory:
+    description: 'App Push Memory limit for the Autoscaler Application'
+    default: 512
+  autoscaler.encryption_key:
+    description: 'Specifies the key to be used when encrypting sessions'
+  autoscaler.cf.admin_user:
+    description: 'Username of the CF admin user'
+  autoscaler.cf.admin_password:
+    description: 'Password of the CF admin user'
+  autoscaler.use_auth:
+    description: 'Should Autoscaler be protected using basic auth'
+  autoscaler.user:
+    description: 'Autoscaler basic auth user'
+  autoscaler.password:
+    description: 'Autoscaler basic auth password'
+  ### CUSTOM_VARIABLE_BEGIN_MARKER
+
+  ### CUSTOM_VARIABLE_END_MARKER
+
+
+  autoscaler.persistence_store_type:
+    description: 'Use MySQL or custom DB for persistence store'
+    default: none
+
+
+

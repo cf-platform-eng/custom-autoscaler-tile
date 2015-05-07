@@ -1,0 +1,24 @@
+networks: (( merge ))
+
+meta:
+  environment: ~
+  job_templates: (( merge ))
+
+jobs:
+  - name: deploy-autoscaler
+    templates:
+    - name: deploy-autoscaler
+    instances: 1
+    lifecycle: errand
+    resource_pool: small_z1
+    networks:
+      - name: autoscaler_network
+  - name: destroy-autoscaler
+    instances: 1
+    templates:
+    - name: destroy-autoscaler
+    lifecycle: errand
+    resource_pool: small_z1
+    networks:
+      - name: autoscaler_network
+

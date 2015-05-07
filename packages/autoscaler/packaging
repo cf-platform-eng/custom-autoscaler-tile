@@ -1,0 +1,17 @@
+# abort script on any command that exit with a non zero value
+set -e
+
+# Check for presence of the app bits
+# Modify the archive to be other file extension if its not a jar
+app_archive=`ls TEMPLATE_APP_BLOB_PATH/TEMPLATE_APP_BLOB_FILE`
+
+if [  "$app_archive" != "" ] ; then
+  echo "autoscaler app found"
+else
+  echo "autoscaler app not found"
+  exit 1
+fi
+
+mkdir -p ${BOSH_INSTALL_TARGET}/lib
+cp $app_archive ${BOSH_INSTALL_TARGET}/lib/
+

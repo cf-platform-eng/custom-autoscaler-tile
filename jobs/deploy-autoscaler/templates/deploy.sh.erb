@@ -1,0 +1,189 @@
+#!/bin/bash
+set -e -x
+
+  <%
+    def grab_app_domain_name
+      app_domains_str = properties.app_domains.to_s
+      array_start = ( app_domains_str =~ /^\[/ )
+      if (array_start == 0)
+        app_domain_entry = app_domains_str.gsub(/^\[/, '').gsub(/\]/,'').gsub(/,.*/, '')
+      else
+        app_domain_entry = app_domains_str
+      end
+      app_domain_entry
+    end
+    app_domain = grab_app_domain_name
+  %>
+
+export PATH="/var/vcap/packages/cf_cli/bin:$PATH"
+
+export SCHEME=https
+export ADMIN_USER=<%= properties.autoscaler.cf.admin_user %>
+export ADMIN_PASSWORD=<%= properties.autoscaler.cf.admin_password %>
+export DOMAIN=<%= properties.domain %>
+export APP_DOMAIN=<%="#{app_domain}"%>
+export API_ENDPOINT=$SCHEME://api.${DOMAIN}
+export APP_NAME=<%= properties.autoscaler.app_name %>
+export APP_URI=<%= properties.autoscaler.app_uri %>
+export ORG=${APP_NAME}-service-org
+export SPACE=${APP_NAME}-service-space
+export QUOTA=${APP_NAME}-service-quota
+export CF_TARGET=$API_ENDPOINT
+export CF_ORG=$ORG
+export CF_SPACE=$SPACE
+export CF_USER=$ADMIN_USER
+export CF_PASSWORD=$ADMIN_PASSWORD
+export CF_SKIP_SSL=<%= properties.ssl.skip_cert_verify %>
+export ORG_QUOTA=<%= properties.autoscaler.app_push.org_quota %>
+export APP_PUSH_TIMEOUT=<%= properties.autoscaler.app_push.timeout %>
+export APP_PUSH_MEMORY=<%= properties.autoscaler.app_push.memory %>
+
+# Use this only if app needs additional libraries that need to be downloaded
+#
+
+# Use these variables only if app needs to persistence store for saving its plans/sevice offerings etc.
+export PERSISTENCE_STORE_TYPE=<%= properties.autoscaler.persistence_store_type %>
+
+
+# Use these variables only if app needs to know how to connect to a remote target that it autoscalers
+
+export AUTOSCALER_USE_AUTH=<%= properties.autoscaler.use_auth %>
+export AUTOSCALER_USER=<%= properties.autoscaler.user %>
+export AUTOSCALER_PASSWD=<%= properties.autoscaler.password %>
+
+export DELETE_PREV_APP_INSTANCE=<%= properties.autoscaler.delete_prev_app_instance %>
+
+export DEFAULT_DB_NAME=${APP_NAME}-mysql
+
+export EXPLODED_APP_FOLDER="exploded-app-contents"
+
+### CUSTOM_VARIABLE_BEGIN_MARKER
+
+### CUSTOM_VARIABLE_END_MARKER
+
+export CF_HOME=`pwd`/home/cf
+mkdir -p $CF_HOME
+
+# Following variables would be replaced based on blobs that get added and are considered as app bits
+# Modify extension type for App file - modify as needed
+APP_PREFIX_NAME=TEMPLATE_APP_PREFIX_NAME
+EXTENSION_TYPE=TEMPLATE_APP_EXTENSION
+
+TARGET_APP=${APP_PREFIX_NAME}.${EXTENSION_TYPE}
+JOB_NAME=deploy-autoscaler
+PACKAGE_PATH="/var/vcap/packages/autoscaler"
+
+RUN_DIR=/var/vcap/sys/run/$JOB_NAME
+LOG_DIR=/var/vcap/sys/log/$JOB_NAME
+PIDFILE=${RUN_DIR}/pid
+
+export DEBUG_LOG=$LOG_DIR/deploy-service-autoscaler.log
+
+mkdir -p $RUN_DIR $LOG_DIR
+chown -R vcap:vcap $RUN_DIR $LOG_DIR
+
+function log_debug() {
+  echo `date` $1 >> $DEBUG_LOG
+}
+
+function authenticate_and_target() {
+  cf api $API_ENDPOINT <% if properties.ssl.skip_cert_verify %>--skip-ssl-validation<% end %>
+  cf auth $ADMIN_USER $ADMIN_PASSWORD
+  cf create-org $ORG
+  cf target -o $ORG
+  cf create-space $SPACE
+  cf target -s $SPACE
+}
+
+function create_quota() {
+  cf create-quota $QUOTA -m ${ORG_QUOTA}m -r 10 -s 10
+  cf update-quota $QUOTA -m ${ORG_QUOTA}m -r 10 -s 10 --disallow-paid-service-plans
+  cf set-quota $ORG $QUOTA
+}
+
+function provision_and_bind_db() {
+  db_plan=`cf marketplace | grep p-mysql | awk '{ print $2 }' | sed 's/,//g'`
+  if [ "$db_plan" != "" ]; then
+    cf create-service p-mysql $db_plan $DEFAULT_DB_NAME
+    cf bind-service ${APP_NAME} $DEFAULT_DB_NAME
+  fi
+}
+
+function restart_app() {
+  CF_TRACE=true cf restart ${APP_NAME}
+  cf logs ${APP_NAME} --recent
+}
+
+function add_env_vars() {
+   if [ "$AUTOSCALER_USE_AUTH" == "true" ]; then
+     cf set-env ${APP_NAME} BASIC_AUTH_USERNAME $AUTOSCALER_USER
+     cf set-env ${APP_NAME} BASIC_AUTH_PASSWORD $AUTOSCALER_PASSWD
+  fi
+
+  cf set-env ${APP_NAME} DOMAIN $DOMAIN
+  cf set-env ${APP_NAME} UAA_CLIENT_ID autoscaling_service
+  cf set-env ${APP_NAME} UAA_CLIENT_SECRET <%= properties.uaa.clients.autoscaler.secret %>
+  cf set-env ${APP_NAME} DEBUG_UAAC true
+}
+
+function delete_prev_app_instance() {
+
+  cf apps | grep ${APP_NAME}
+  existing_app_check=$?
+
+  if [ "$existing_app_check" == "0" ]; then
+
+    # Look for User-Provided env variables and stop after the first blank line after that
+    cf env ${APP_NAME} | awk 'f{print}/User-Provided/{f=1};/^ *$/{f=0}' \
+                | grep '.' | awk -F ':' '{print $1}' | while read env_variable_name
+    do
+      cf unset-env $env_variable_name
+    done
+    cf delete -f ${APP_NAME}  > /dev/null
+  fi
+}
+
+function push_app() {
+  pushd $PACKAGE_PATH
+    mkdir -p /var/vcap/data/tmp
+    export TMPDIR=/var/vcap/data/tmp
+
+    # Cleanup any older version of the app
+    <% if properties.delete_prev_app_instance%>
+    delete_prev_app_instance
+    <% end %>
+
+    # The autoscaler app bundle would be under $PACKAGE_PATH/lib folder
+    # Unzip the autoscaler-master.zip and push the contents within the autoscaler-master directoy, not the zip itself directly
+    unzip ${PACKAGE_PATH}/lib/${TARGET_APP} -d ${PACKAGE_PATH}
+
+    # Check if the zip is named with -master
+    # In that case, remove the manifest.yml and use the extracted folder as path to app
+    # This can change based on the github or a different repo
+
+    # Since this is is a go app, locate the Procfile
+    #        and consider its parent as the path to app
+    APP_FOLDER=`dirname $(find . -name Procfile)`
+
+    # Remove the manifest so it does not conflict with our parameters for cf push
+    find . -name manifest.yml | xargs rm
+
+    CF_TRACE=true cf push ${APP_NAME} -p ${PACKAGE_PATH}/${APP_FOLDER} -n ${APP_URI} -d ${APP_DOMAIN} -t ${APP_PUSH_TIMEOUT} -m ${APP_PUSH_MEMORY}m --no-start -b go_buildpack
+    cf logs ${APP_NAME} --recent
+
+  popd
+}
+
+
+cf -v
+authenticate_and_target
+create_quota
+
+push_app
+add_env_vars
+
+if [ "${PERSISTENCE_STORE_TYPE}" == "mysql" ]; then
+  provision_and_bind_db
+fi
+
+restart_app

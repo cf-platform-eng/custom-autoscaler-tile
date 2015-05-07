@@ -1,0 +1,265 @@
+---
+name: CustomAutoscaler                                    # [1]
+product_version: 1.3.0                                      # [1]
+metadata_version: "1.3"                                    # [2]
+target_installer_version: 1.3
+stemcell:                                                  # [3]
+  #name: bosh-vsphere-esxi-ubuntu-trusty-go_agent                     # FOR VSPHERE
+  #file: bosh-stemcell-2865.1-vsphere-esxi-ubuntu-trusty-go_agent.tgz # FOR VSPHERE - but could not locate one directly from bosh s3 repo
+  name: light-bosh-aws-xen-hvm-ubuntu-trusty-go_agent
+  file: light-bosh-stemcell-2865.1-aws-xen-hvm-ubuntu-trusty-go_agent.tgz # FOR AWS
+  version: '2865.1'
+releases:                                                  # [5]
+  - name: custom-autoscaler
+    file: custom-autoscaler-1.3.tgz
+    version: '1.3'
+provides_product_versions:
+- name: autoscaler
+  version: '1.3'
+requires_product_versions:
+- name: cf
+  version: "~> 1.0"
+label: Custom Autoscaler Experimental
+description: Custom Autoscaler Experimental Tile  ..
+image: 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
+
+
+
+
+rank: 50
+post_deploy_errands:
+- name: deploy-autoscaler
+pre_delete_errands:
+- name: destroy-autoscaler
+
+
+form_types:                                                # [8]
+  - name: autoscaler_app
+    label: Service Application
+    description: Service configuration
+    property_inputs:                                       # [9]
+      - reference: .app_name
+        label: Application Name
+        description: 'Enter the name for the Autoscaler App'
+      - reference: .app_uri
+        label: Application URI
+        description: 'Enter the uri/endpoint for the Autoscaler app (on push to CF)'
+      - reference: .autoscaling_token_secret
+        label: Autoscaling Service client token secret
+        description: 'Autoscaling client token secret required to manage/scale apps with right privileges; check Elastic Runtime Credentials page for the autoscaling_service client secret (under UAA -> client section)'
+      - reference: .protect_with_auth
+        label: Protect Autoscaler with Basic Auth
+        description: 'Protect Autoscaler with Basic Auth, a set of credentials would be auto-generated and be used for authenticating against the Autoscaler app'
+  ### PERSISTENCE_STORE_BEGIN_MARKER
+  - name: persistence-db
+    label: Persistence for Autoscaler Service
+    description: Persistence store for Autoscaler Service to store its configurations
+    property_inputs:                                       # [9]
+      - reference: .persistence_store_type
+        label: Persistence using MySQL Service binding (default) or custom database
+        description: "Select MySQL Service Binding for storing autoscaler configurations"
+
+property_blueprints:
+- name: encryption_key
+  type: secret
+- name: vm_credentials
+  type: salted_credentials
+  default:
+    identity: vcap
+- name: app_name
+  type: string
+  configurable: true
+  default: CustomAutoscaler
+- name: app_uri
+  type: string
+  configurable: true
+  default: custom-autoscaler
+- name: autoscaling_token_secret
+  type: string
+  configurable: true
+- name: protect_with_auth
+  type: boolean
+  configurable: true
+  default: false
+### CUSTOM_VARIABLE_DEFN_BEGIN_MARKER
+### CUSTOM_VARIABLE_DEFN_END_MARKER
+- name: org_quota
+  type: integer
+  configurable: false
+  constraints:
+    min: 512
+    max: 1024
+  default: 512
+- name: memory
+  type: integer
+  configurable: false
+  constraints:
+    min: 128
+    max: 256
+  default: 256
+- name: persistence_store_type
+  type: dropdown_select
+  configurable: true
+  options:
+  - name: mysql
+    label: Managed MySQL Service
+    default: true
+  - name: none
+    label: None
+
+job_types:
+- name: deploy-autoscaler
+  resource_label: Deploy Autoscaler
+  template: deploy-autoscaler
+  release: custom-autoscaler
+  errand: true
+  resource_definitions:
+  - name: ram
+    type: integer
+    configurable: false
+    default: 512
+  - name: ephemeral_disk
+    type: integer
+    configurable: false
+    default: 2048
+  - name: persistent_disk
+    type: integer
+    configurable: false
+    default: 0
+  - name: cpu
+    type: integer
+    configurable: false
+    default: 1
+  static_ip: 0
+  dynamic_ip: 1
+  max_in_flight: 1
+  instance_definitions:
+  - name: instances
+    type: integer
+    configurable: false
+    default: 1
+  property_blueprints:
+  - name: vm_credentials
+    type: salted_credentials
+    default:
+      identity: vcap
+  - name: autoscaler_credentials
+    type: salted_credentials
+
+  manifest: |
+    domain: (( ..cf.cloud_controller.system_domain.value ))
+    app_domains:
+      - (( ..cf.cloud_controller.apps_domain.value ))
+    ssl:
+      skip_cert_verify: (( ..cf.ha_proxy.skip_cert_verify.value ))
+    uaa:
+      url: https://uaa.(( ..cf.cloud_controller.system_domain.value ))
+      clients:
+        autoscaler:
+          secret: ((.properties.autoscaling_token_secret.value ))
+    autoscaler:
+      app_name: (( .properties.app_name.value ))
+      app_uri: (( .properties.app_uri.value ))
+      use_auth: (( .properties.protect_with_auth.value ))
+      user: (( .deploy-autoscaler.autoscaler_credentials.identity ))
+      password: (( .deploy-autoscaler.autoscaler_credentials.password ))
+      app_push:
+        org_quota: (( .properties.org_quota.value ))
+        timeout: 180
+        memory: (( .properties.memory.value ))
+      persistence_store_type: (( .properties.persistence_store_type.value ))
+      encryption_key: (( .properties.encryption_key.secret ))
+      cf:
+        admin_user: (( ..cf.uaa.system_services_credentials.identity ))
+        admin_password: (( ..cf.uaa.system_services_credentials.password ))
+
+- name: destroy-autoscaler
+  resource_label: Remove Autoscaler
+  template: destroy-autoscaler
+  release: custom-autoscaler
+  errand: true
+  resource_definitions:
+  - name: ram
+    type: integer
+    configurable: false
+    default: 512
+  - name: ephemeral_disk
+    type: integer
+    configurable: false
+    default: 1024
+  - name: persistent_disk
+    type: integer
+    configurable: false
+    default: 0
+  - name: cpu
+    type: integer
+    configurable: false
+    default: 1
+  static_ip: 0
+  dynamic_ip: 1
+  max_in_flight: 1
+  instance_definitions:
+  - name: instances
+    type: integer
+    configurable: false
+    default: 1
+  property_blueprints:
+  - name: vm_credentials
+    type: salted_credentials
+    default:
+      identity: vcap
+
+  manifest: |
+    domain: (( ..cf.cloud_controller.system_domain.value ))
+    app_domains:
+      - (( ..cf.cloud_controller.apps_domain.value ))
+    ssl:
+      skip_cert_verify: (( ..cf.ha_proxy.skip_cert_verify.value ))
+    uaa:
+      url: https://uaa.(( ..cf.cloud_controller.system_domain.value ))
+      clients:
+        autoscaler:
+          secret: ((.properties.autoscaling_token_secret.value ))
+    autoscaler:
+      app_name: (( .properties.app_name.value ))
+      app_uri: (( .properties.app_uri.value ))
+      encryption_key: (( .properties.encryption_key.secret ))
+      cf:
+        admin_user: (( ..cf.uaa.system_services_credentials.identity ))
+        admin_password: (( ..cf.uaa.system_services_credentials.password ))
+
+- name: compilation
+  resource_label: compilation
+  resource_definitions:
+   - name: ram
+     type: integer
+     configurable: true
+     default: 1_024
+   - name: ephemeral_disk
+     type: integer
+     configurable: true
+     default: 1024
+   - name: persistent_disk
+     type: integer
+     configurable: true
+     default: 0
+   - name: cpu
+     type: integer
+     configurable: true
+     default: 2
+
+  static_ip: 0
+  dynamic_ip: 1
+  max_in_flight: 1
+
+  instance_definitions:
+    - name: instances
+      type: integer
+      default: 1
+
+update:
+  canaries: 1
+  canary_watch_time: 60000-240000
+  max_in_flight: 1
+  update_watch_time: 60000-240000
+

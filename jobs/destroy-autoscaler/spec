@@ -1,0 +1,21 @@
+---
+name: destroy-autoscaler
+templates:
+  destroy.sh.erb: bin/run
+packages:
+- cf_cli
+properties:
+  ssl.skip_cert_verify:
+    description: 'Whether to verify SSL certs when making web requests'
+  domain:
+    description: 'The CF top-level domain'
+  app_domains:
+    description: 'CloudFoundry application domains'
+  autoscaler.app_name:
+    description: 'Autoscaler App Name'
+  autoscaler.app_uri:
+    description: 'Uri of the Autoscaler Application'
+  autoscaler.cf.admin_user:
+    description: 'Username of the CF admin user'
+  autoscaler.cf.admin_password:
+    description: 'Password of the CF admin user'

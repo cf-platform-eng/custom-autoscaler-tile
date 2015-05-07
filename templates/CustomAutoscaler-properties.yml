@@ -1,0 +1,37 @@
+properties:
+  # EDIT ME -- change the domain names
+  domain: 10.244.0.34.xip.io
+  app_domains: 10.244.0.34.xip.io
+  uaa:
+    clients:
+      autoscaler:
+        secret: 'test'
+  ssl:
+    skip_cert_verify: true
+  autoscaler:
+    encryption_key: 'test'
+    # EDIT ME -- Change the app name and URI as needed
+    app_name: CustomAutoScalerService
+    app_uri: custom-autoscaler
+    use_auth: false
+    user: testuser
+    password: testuser
+    ### CUSTOM_VARIABLE_MANIFEST_BEGIN_MARKER
+    ### CUSTOM_VARIABLE_MANIFEST_END_MARKER
+
+    app_push:
+      memory: 128
+      org_quota: 512
+      timeout: 180
+    # Set the persistence type to 'mysql' for using my sql instance to store data
+    # Set the persistence type to 'custom' for using custom db (non-my sql) instance to store data
+    # Set the persistence type to 'none' if its all in-memory
+    persistence_store_type: mysql
+
+    #
+    # EDIT ME - remove if there are no On-Demand Plans that need to be created
+
+    cf:
+      admin_user: admin
+      admin_password: admin
+
