@@ -1,3 +1,5 @@
+# custom-autoscaler-tile is no longer actively maintained by VMware.
+
 # Custom AutoScaling Tile Repo
 
 This is a repo to generate an Custom Autoscaler Tile that can be imported into Pivotal Cloud Foundry Ops Mgr.
